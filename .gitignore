@@ -1,0 +1,12 @@
+*.srt
+*.vtt
+*.ttml
+*.srv1
+*.srv2
+*.srv3
+*.json3
+*.mp4
+*.mkv
+*.webm
+*.mov
+node_modules/
