@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "subs-ready": "./src/subs.js"
+  },
   "scripts": {
     "subs": "node src/subs.js"
   }

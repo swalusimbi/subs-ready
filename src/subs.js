@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
@@ -7,7 +9,7 @@ const args = process.argv.slice(2);
 
 function usage(exitCode = 0) {
   console.log(`Usage:
-  npm run subs -- <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json]
+  subs-ready <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json]
 `);
   process.exit(exitCode);
 }
