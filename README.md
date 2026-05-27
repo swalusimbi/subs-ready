@@ -14,10 +14,18 @@ Create clean `.srt` subtitle files from YouTube caption tracks.
 
 ## Usage
 
+Install the command from this project:
+
+```powershell
+npm link
+```
+
+You can now run `subs-ready` from any directory.
+
 Generate a subtitle file beside your downloaded video:
 
 ```powershell
-npm run subs -- "https://www.youtube.com/watch?v=VIDEO_ID" --video "my-video.mp4"
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --video "my-video.mp4"
 ```
 
 That writes:
@@ -29,7 +37,7 @@ my-video.srt
 You can also choose the output path:
 
 ```powershell
-npm run subs -- "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt"
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt"
 ```
 
 ## Options
