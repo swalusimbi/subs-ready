@@ -1,10 +1,37 @@
 {
   "name": "subs-ready",
   "version": "0.1.0",
-  "private": true,
+  "description": "Turn YouTube auto-captions into clean, readable .srt subtitle files.",
   "type": "module",
+  "license": "MIT",
+  "author": "Walusimbi Silver <walusimbisilver90@gmail.com> (https://github.com/swalusimbi)",
+  "keywords": [
+    "youtube",
+    "subtitles",
+    "srt",
+    "captions",
+    "yt-dlp",
+    "transcription",
+    "cli"
+  ],
+  "homepage": "https://github.com/swalusimbi/subs-ready#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swalusimbi/subs-ready.git"
+  },
+  "bugs": {
+    "url": "https://github.com/swalusimbi/subs-ready/issues"
+  },
   "bin": {
     "subs-ready": "./src/subs.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
     "subs": "node src/subs.js"
