@@ -1,55 +1,88 @@
-# Subs Ready
+# subs-ready
 
-Create clean `.srt` subtitle files from YouTube caption tracks.
+Turn YouTube auto-captions into clean, readable `.srt` subtitle files.
 
-`subs-ready` fetches available YouTube captions with `yt-dlp`, chooses the best English track by default and writes a cleaned subtitle file for your downloaded video.
+YouTube's automatic captions come as a stream of word-level timing rather than
+finished subtitle cues. `subs-ready` uses that timing to build clean, well-paced
+subtitle cues, giving you a readable `.srt` file you can use or edit right away.
 
-## Features
+Run it in any folder:
 
-- Prefers manual English captions when YouTube provides them
-- Falls back to English automatic captions
-- Preserves manual caption timing
-- Rebuilds automatic captions into cleaner, non-overlapping cues
-- Writes the subtitle file beside your downloaded video when `--video` is provided
+```sh
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID"
+```
 
-## Usage
+You get a `.srt` named after the video, ready to use.
 
-Install the command from this project:
+## What it does
 
-```powershell
+- Rebuilds automatic captions into clean, non-overlapping cues
+- Prefers manual English captions when YouTube provides them, and preserves their original timing
+- Falls back to English automatic captions, then to any available track
+- Wraps lines to a readable width (~42 characters, at most two lines per cue)
+- Writes the `.srt` beside your downloaded video, to a path you choose, or named after the video title
+
+## Install
+
+`subs-ready` is a self-contained Node.js CLI with zero npm dependencies, built on
+top of `yt-dlp`. Clone the repo, then link the command from inside it:
+
+```sh
 npm link
 ```
 
-You can now run `subs-ready` from any directory.
+You can now run `subs-ready` from any directory. These commands are identical on
+macOS, Linux, and Windows; only the prerequisites below install differently per OS.
 
-Generate a subtitle file beside your downloaded video:
+## Usage
 
-```powershell
+Subtitle file named after the video, written to the current folder:
+
+```sh
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID"
+```
+
+Write it beside a video you've downloaded (reuses the video's filename):
+
+```sh
 subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --video "my-video.mp4"
 ```
 
-That writes:
+That writes `my-video.srt`.
 
-```text
-my-video.srt
-```
+Choose an explicit output path:
 
-You can also choose the output path:
-
-```powershell
+```sh
 subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt"
 ```
 
 ## Options
 
 ```text
---video <path>     Use the video filename as the subtitle filename
+--video <path>     Name the subtitle file after this video file
 --out <path>       Write the SRT to a specific path
---lang <code>      Preferred caption language, default: best English track
---keep-json        Keep the downloaded json3 caption file
+--lang <code>      Preferred caption language (default: best English track)
+--keep-json        Keep the raw json3 caption file alongside the SRT
 ```
 
 ## Requirements
 
-- Node.js
-- yt-dlp available on PATH
+- [Node.js](https://nodejs.org) 18 or newer
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) available on your PATH
+
+Install `yt-dlp` with your platform's package manager:
+
+```sh
+# macOS (Homebrew)
+brew install yt-dlp
+
+# Linux (pipx, works on any distro)
+pipx install yt-dlp
+
+# Windows (winget, or: scoop install yt-dlp)
+winget install yt-dlp
+```
+
+## License
+
+[MIT](LICENSE)
