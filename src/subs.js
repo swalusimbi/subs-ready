@@ -18,10 +18,41 @@ function resolveOutputPath({ explicitOut, videoPath }, info) {
   return resolve(`${sanitizeName(info.title || "subtitle")}.srt`);
 }
 
-function main() {
+// Show a label with trailing dots while a slow step runs, so the wait is not
+// silent. Falls back to a single line when output is not a terminal.
+async function withDots(label, task) {
+  if (!process.stdout.isTTY) {
+    console.log(`${label} ...`);
+    return task();
+  }
+
+  process.stdout.write(`${label} `);
+  const timer = setInterval(() => process.stdout.write("."), 800);
+  try {
+    return await task();
+  } finally {
+    clearInterval(timer);
+    process.stdout.write("\n");
+  }
+}
+
+// Turn a YouTube caption language code into a readable name, e.g.
+// "en-orig" -> "English", "en-US" -> "American English".
+function languageName(code) {
+  const base = code.replace(/-orig$/i, "");
+  try {
+    const name = new Intl.DisplayNames(["en"], { type: "language" }).of(base);
+    if (name && name !== base) return name;
+  } catch {
+    // Intl could not resolve the code; fall back to the raw value below.
+  }
+  return base;
+}
+
+async function main() {
   const options = parseArgs(process.argv.slice(2));
 
-  const info = getVideoInfo(options.url);
+  const info = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
   const outputPath = resolveOutputPath(options, info);
   const outputDir = dirname(outputPath);
   if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
@@ -35,18 +66,19 @@ function main() {
   if (!track) {
     const languages = availableLanguages(info);
     throw new Error([
-      options.requestedLang ? `No ${options.requestedLang} json3 captions were found.` : "No json3 captions were found.",
-      `Manual languages: ${languages.manual.join(", ") || "none"}`,
-      `Automatic languages: ${languages.automatic.join(", ") || "none"}`,
+      options.requestedLang
+        ? `Could not find "${options.requestedLang}" captions for this video.`
+        : "Could not find any captions for this video.",
+      `Available manual languages: ${languages.manual.join(", ") || "none"}`,
+      `Available automatic languages: ${languages.automatic.join(", ") || "none"}`,
     ].join("\n"));
   }
 
-  console.log(`Fetching ${track.type} ${track.lang} captions...`);
-  downloadCaptions(track, outputTemplate, options.url);
+  await withDots(`Downloading ${track.type} ${languageName(track.lang)} captions`, () => downloadCaptions(track, outputTemplate, options.url));
 
   const jsonPath = join(workDir, `captions.${track.lang}.json3`);
   if (!existsSync(jsonPath)) {
-    throw new Error(`No ${track.lang} json3 captions were downloaded. Run: yt-dlp --list-subs ${options.url}`);
+    throw new Error(`The ${track.lang} captions could not be downloaded. Try: yt-dlp --list-subs ${options.url}`);
   }
 
   const captionJson = JSON.parse(readFileSync(jsonPath, "utf8"));
@@ -66,9 +98,7 @@ function main() {
   console.log(`Cues: ${countCues(srt)}`);
 }
 
-try {
-  main();
-} catch (error) {
+main().catch((error) => {
   console.error(error.message);
   process.exit(1);
-}
+});
