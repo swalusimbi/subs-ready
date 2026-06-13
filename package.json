@@ -23,7 +23,7 @@
     "url": "https://github.com/swalusimbi/subs-ready/issues"
   },
   "bin": {
-    "subs-ready": "./src/subs.js"
+    "subs-ready": "src/subs.js"
   },
   "files": [
     "src",
@@ -34,6 +34,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "subs": "node src/subs.js"
+    "subs": "node src/subs.js",
+    "test": "node --test"
   }
 }
