@@ -1,6 +1,6 @@
 {
   "name": "subs-ready",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Turn YouTube auto-captions into clean, readable .srt subtitle files.",
   "type": "module",
   "license": "MIT",
