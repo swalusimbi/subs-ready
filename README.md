@@ -18,7 +18,7 @@ You get a `.srt` named after the video, ready to use.
 
 - Rebuilds automatic captions into clean, non-overlapping cues
 - Prefers manual English captions when YouTube provides them, and preserves their original timing
-- Falls back to English automatic captions, then to any available track
+- Falls back to English automatic captions, then to any available track when no language is specified
 - Wraps lines to a readable width (~42 characters, at most two lines per cue)
 - Writes the `.srt` beside your downloaded video, to a path you choose, or named after the video title
 
@@ -71,10 +71,15 @@ with `--force`.
 ```text
 --video <path>     Name the subtitle file after this video file
 --out <path>       Write the SRT to a specific path
---lang <code>      Preferred caption language (default: best English track)
+--lang <code>      Caption language code (default: best English track)
 --keep-json        Keep the raw json3 caption file alongside the SRT
 --force            Overwrite existing output files
 ```
+
+`--lang` requires an exact caption language code, such as `fr` or `en-US`.
+Manual captions are preferred over automatic captions for that code. If no
+usable track matches, the command fails without downloading captions or writing
+output files.
 
 ## Requirements
 

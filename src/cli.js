@@ -8,7 +8,8 @@ export function usage(exitCode = 0) {
   console.log(`Usage:
   subs-ready <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json] [--force]
 
-  --force  Overwrite existing output files (empty captions are always rejected)
+  --lang <code>  Use this exact caption language code or fail if unavailable
+  --force        Overwrite existing output files (empty captions are always rejected)
 `);
   process.exit(exitCode);
 }
