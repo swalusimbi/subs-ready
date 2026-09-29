@@ -22,6 +22,11 @@ You get a `.srt` named after the video, ready to use.
 - Wraps lines to a readable width (~42 characters, at most two lines per cue)
 - Writes the `.srt` beside your downloaded video, to a path you choose, or named after the video title
 
+Manual captions keep valid start and end times, including cues shorter than a
+second. Missing or invalid durations are repaired using the next event's start,
+with an 80 ms gap when there is room. If the next event does not start later or
+there is no next event, the fallback duration is 2.5 seconds.
+
 ## Install
 
 `subs-ready` is a self-contained Node.js CLI with zero npm dependencies, built on

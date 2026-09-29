@@ -60,13 +60,17 @@ export function json3EventsToSrt(captionJson) {
     const nextStart = events[index + 1]?.tStartMs;
     let end = Number.isFinite(event.dDurationMs) ? start + event.dDurationMs : undefined;
 
-    if (!end || end <= start) {
-      end = nextStart ? nextStart - 80 : start + 2500;
+    if (!Number.isFinite(end) || end <= start) {
+      end = start + 2500;
+      if (nextStart > start) {
+        // Leave a gap where possible without making a short cue end before it starts.
+        end = nextStart - start > 80 ? nextStart - 80 : nextStart;
+      }
     }
 
     cues.push({
       start,
-      end: Math.max(start + 900, end),
+      end,
       text: wrapText(text),
     });
   }

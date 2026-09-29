@@ -54,6 +54,76 @@ test("json3EventsToSrt skips empty cues", () => {
   assert.ok(srt.includes("Hi"));
 });
 
+test("json3EventsToSrt preserves short manual cues without introducing overlaps", () => {
+  const srt = json3EventsToSrt({
+    events: [
+      { tStartMs: 0, dDurationMs: 300, segs: [{ utf8: "First" }] },
+      { tStartMs: 400, dDurationMs: 300, segs: [{ utf8: "Second" }] },
+    ],
+  });
+  assert.deepEqual(srt.split("\n").filter((line) => line.includes(" --> ")), [
+    "00:00:00,000 --> 00:00:00,300",
+    "00:00:00,400 --> 00:00:00,700",
+  ]);
+});
+
+test("json3EventsToSrt preserves overlaps already present in valid manual timing", () => {
+  const srt = json3EventsToSrt({
+    events: [
+      { tStartMs: 0, dDurationMs: 1500, segs: [{ utf8: "First speaker" }] },
+      { tStartMs: 500, dDurationMs: 300, segs: [{ utf8: "Second speaker" }] },
+    ],
+  });
+  assert.match(srt, /00:00:00,000 --> 00:00:01,500/);
+  assert.match(srt, /00:00:00,500 --> 00:00:00,800/);
+});
+
+test("json3EventsToSrt repairs missing or invalid durations using the next event", () => {
+  for (const dDurationMs of [undefined, 0, -100, NaN, Infinity]) {
+    const srt = json3EventsToSrt({
+      events: [
+        { tStartMs: 1000, dDurationMs, segs: [{ utf8: "First" }] },
+        { tStartMs: 1400, dDurationMs: 300, segs: [{ utf8: "Second" }] },
+      ],
+    });
+    assert.match(srt, /00:00:01,000 --> 00:00:01,320/);
+    assert.match(srt, /00:00:01,400 --> 00:00:01,700/);
+  }
+});
+
+test("json3EventsToSrt repairs closely spaced cues without a negative duration or overlap", () => {
+  for (const gap of [1, 30, 80]) {
+    const srt = json3EventsToSrt({
+      events: [
+        { tStartMs: 1000, segs: [{ utf8: "First" }] },
+        { tStartMs: 1000 + gap, dDurationMs: 300, segs: [{ utf8: "Second" }] },
+      ],
+    });
+    assert.ok(srt.includes(`00:00:01,000 --> ${formatTime(1000 + gap)}`));
+  }
+});
+
+test("json3EventsToSrt uses a fallback duration for the final cue only when needed", () => {
+  for (const dDurationMs of [undefined, 0, -100, NaN, Infinity]) {
+    const srt = json3EventsToSrt({
+      events: [{ tStartMs: 1000, dDurationMs, segs: [{ utf8: "Final" }] }],
+    });
+    assert.match(srt, /00:00:01,000 --> 00:00:03,500/);
+  }
+});
+
+test("json3EventsToSrt does not infer a negative duration from an earlier or simultaneous event", () => {
+  for (const nextStart of [500, 1000]) {
+    const srt = json3EventsToSrt({
+      events: [
+        { tStartMs: 1000, segs: [{ utf8: "First" }] },
+        { tStartMs: nextStart, dDurationMs: 300, segs: [{ utf8: "Second" }] },
+      ],
+    });
+    assert.match(srt, /00:00:01,000 --> 00:00:03,500/);
+  }
+});
+
 test("json3WordsToSrt groups words into cues", () => {
   const json = {
     events: [
