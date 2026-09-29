@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
-import { parseArgs } from "./cli.js";
+import { parseArgs, languageName, formatLanguages } from "./cli.js";
 import { getVideoInfo, downloadCaptions } from "./ytdlp.js";
 import { chooseTrack, availableLanguages } from "./tracks.js";
 import { json3EventsToSrt, json3WordsToSrt } from "./srt.js";
@@ -37,23 +37,15 @@ async function withDots(label, task) {
   }
 }
 
-// Turn a YouTube caption language code into a readable name, e.g.
-// "en-orig" -> "English", "en-US" -> "American English".
-function languageName(code) {
-  const base = code.replace(/-orig$/i, "");
-  try {
-    const name = new Intl.DisplayNames(["en"], { type: "language" }).of(base);
-    if (name && name !== base) return name;
-  } catch {
-    // Intl could not resolve the code; fall back to the raw value below.
-  }
-  return base;
-}
-
 async function main() {
   const options = parseArgs(process.argv.slice(2));
 
   const info = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
+  if (options.listLangs) {
+    console.log(formatLanguages(info));
+    return;
+  }
+
   const outputPath = resolveOutputPath(options, info);
   assertOutputAvailable(outputPath, options.force);
 

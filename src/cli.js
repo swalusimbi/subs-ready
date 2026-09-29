@@ -1,4 +1,6 @@
-// Parse the subs-ready command-line arguments.
+// Command-line arguments and terminal messages.
+
+import { availableLanguages } from "./tracks.js";
 
 const VALUE_OPTIONS = new Map([
   ["--lang", "requestedLang"],
@@ -8,14 +10,41 @@ const VALUE_OPTIONS = new Map([
 const FLAG_OPTIONS = new Map([
   ["--keep-json", "keepJson"],
   ["--force", "force"],
+  ["--list-langs", "listLangs"],
 ]);
 
 export function usage(exitCode = 0) {
-  console.log(`Usage:
-  subs-ready <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json] [--force]
+  console.log(`Turn YouTube captions into a readable .srt subtitle file.
 
-  --lang <code>  Use this exact caption language code or fail if unavailable
-  --force        Overwrite existing output files (empty captions are always rejected)
+Usage:
+  subs-ready <youtube-url> [options]
+
+Options:
+  --video <path>  Write beside this video using its filename with .srt
+  --out <path>    Write to this path; takes precedence over --video
+  --lang <code>   Use this exact language code or fail if unavailable
+  --list-langs    List usable manual and automatic caption languages
+  --keep-json     Save raw captions alongside the SRT
+  --force         Allow existing output files to be overwritten
+  -h, --help      Show this help and exit
+
+Defaults:
+  Write <video title>.srt in the current folder.
+  Prefer manual English captions, then automatic English captions.
+  Fall back to any usable track when English is unavailable.
+  With --lang, prefer manual captions for that code, then automatic captions.
+  Existing files are protected. Empty captions fail even with --force.
+
+--list-langs fetches track information and exits without writing files.
+It lists all usable languages regardless of --lang or output options.
+Value options accept both --lang fr and --lang=fr. Quote paths with spaces.
+
+Examples:
+  subs-ready "https://www.youtube.com/watch?v=VIDEO_ID"
+  subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --video "my video.mp4"
+  subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "captions.srt"
+  subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --list-langs
+  subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --lang fr
 `);
   process.exit(exitCode);
 }
@@ -30,6 +59,7 @@ export function parseArgs(args) {
     explicitOut: undefined,
     keepJson: false,
     force: false,
+    listLangs: false,
   };
   let optionsEnded = false;
 
@@ -72,4 +102,31 @@ export function parseArgs(args) {
 
   if (!options.url) throw new Error("A YouTube URL is required. Run subs-ready --help for usage.");
   return options;
+}
+
+// Keep the exact code in listings even when variants share a readable name.
+export function languageName(code) {
+  const base = code.replace(/-orig$/i, "");
+  try {
+    const name = new Intl.DisplayNames(["en"], { type: "language" }).of(base);
+    if (name && name !== base) return name;
+  } catch {
+    // Unknown codes are still useful as arguments to --lang.
+  }
+  return base;
+}
+
+export function formatLanguages(info) {
+  const languages = availableLanguages(info);
+  const lines = ["Usable caption languages:"];
+  for (const [type, codes] of Object.entries(languages)) {
+    lines.push(`\n${type === "manual" ? "Manual" : "Automatic"} captions:`);
+    lines.push(...(codes.length
+      ? [...codes].sort().map((code) => `  ${code} (${languageName(code)})`)
+      : ["  none"]));
+  }
+  lines.push(languages.manual.length || languages.automatic.length
+    ? "\nChoose a language with --lang <code>."
+    : "\nNo usable caption tracks were found for this video.");
+  return lines.join("\n");
 }

@@ -45,6 +45,12 @@ macOS, Linux, and Windows; only the prerequisites below install differently per 
 
 ## Usage
 
+Show all options, defaults and examples:
+
+```sh
+subs-ready --help
+```
+
 Subtitle file named after the video, written to the current folder:
 
 ```sh
@@ -75,15 +81,35 @@ This also applies to raw captions saved with `--keep-json`. If the captions
 contain no usable cues, the command fails without writing output files, even
 with `--force`.
 
+List usable caption languages before choosing one:
+
+```sh
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --list-langs
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --lang fr
+```
+
+The list shows exact language codes and readable names, grouped by manual and
+automatic captions. Only tracks supported by this tool are listed. Listing
+fetches track information and exits without downloading captions or writing
+files, even when output options are supplied. It shows all usable languages
+regardless of `--lang`. If no usable tracks exist, it reports that and exits
+successfully.
+
 ## Options
 
 ```text
 --video <path>     Name the subtitle file after this video file
 --out <path>       Write the SRT to a specific path
 --lang <code>      Caption language code (default: best English track)
+--list-langs       List usable caption languages and exit without writing files
 --keep-json        Keep the raw json3 caption file alongside the SRT
 --force            Overwrite existing output files
+-h, --help         Show options, defaults and examples
 ```
+
+By default, the SRT is named after the video title in the current folder.
+`--video` uses the supplied video's directory and filename with an `.srt`
+extension. `--out` takes precedence when both output options are supplied.
 
 `--lang` requires an exact caption language code, such as `fr` or `en-US`.
 Manual captions are preferred over automatic captions for that code. If no
