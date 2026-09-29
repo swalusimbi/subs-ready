@@ -1,8 +1,14 @@
 // Parse the subs-ready command-line arguments.
 
-// Options that consume the following argument as their value. Everything else
-// is a valueless flag, so the argument after it can still be the positional URL.
-const VALUE_OPTIONS = ["--lang", "--video", "--out"];
+const VALUE_OPTIONS = new Map([
+  ["--lang", "requestedLang"],
+  ["--video", "videoPath"],
+  ["--out", "explicitOut"],
+]);
+const FLAG_OPTIONS = new Map([
+  ["--keep-json", "keepJson"],
+  ["--force", "force"],
+]);
 
 export function usage(exitCode = 0) {
   console.log(`Usage:
@@ -14,38 +20,56 @@ export function usage(exitCode = 0) {
   process.exit(exitCode);
 }
 
-function readOption(args, name) {
-  const index = args.indexOf(name);
-  if (index === -1) return undefined;
-  const value = args[index + 1];
-  if (!value || value.startsWith("--")) {
-    throw new Error(`${name} needs a value`);
-  }
-  return value;
-}
-
-function hasFlag(args, name) {
-  return args.includes(name);
-}
-
 export function parseArgs(args) {
-  if (hasFlag(args, "--help") || hasFlag(args, "-h")) usage(0);
+  if (args.length === 0) usage(1);
 
-  const positional = args.filter((arg, index) => {
-    if (arg.startsWith("--")) return false;
-    const prev = args[index - 1];
-    return !VALUE_OPTIONS.includes(prev);
-  });
-
-  const url = positional[0];
-  if (!url) usage(1);
-
-  return {
-    url,
-    requestedLang: readOption(args, "--lang"),
-    videoPath: readOption(args, "--video"),
-    explicitOut: readOption(args, "--out"),
-    keepJson: hasFlag(args, "--keep-json"),
-    force: hasFlag(args, "--force"),
+  const options = {
+    url: undefined,
+    requestedLang: undefined,
+    videoPath: undefined,
+    explicitOut: undefined,
+    keepJson: false,
+    force: false,
   };
+  let optionsEnded = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!optionsEnded && arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (!optionsEnded && (arg === "--help" || arg === "-h")) usage(0);
+
+    if (!optionsEnded && arg.startsWith("-")) {
+      const equalsIndex = arg.indexOf("=");
+      const name = equalsIndex === -1 ? arg : arg.slice(0, equalsIndex);
+      if (VALUE_OPTIONS.has(name)) {
+        const key = VALUE_OPTIONS.get(name);
+        if (options[key] !== undefined) {
+          throw new Error(`${name} may only be supplied once.`);
+        }
+        const value = equalsIndex === -1 ? args[index + 1] : arg.slice(equalsIndex + 1);
+        if (!value || (equalsIndex === -1 && value.startsWith("-"))) {
+          throw new Error(`${name} needs a value. Use ${name}=<value> or ${name} <value>.`);
+        }
+        options[key] = value;
+        if (equalsIndex === -1) index += 1;
+      } else if (FLAG_OPTIONS.has(name)) {
+        if (equalsIndex !== -1) throw new Error(`${name} does not accept a value.`);
+        options[FLAG_OPTIONS.get(name)] = true;
+      } else {
+        throw new Error(`Unknown option "${name}". Run subs-ready --help for usage.`);
+      }
+      continue;
+    }
+
+    if (options.url !== undefined) {
+      throw new Error(`Unexpected argument "${arg}". Provide exactly one YouTube URL.`);
+    }
+    options.url = arg;
+  }
+
+  if (!options.url) throw new Error("A YouTube URL is required. Run subs-ready --help for usage.");
+  return options;
 }

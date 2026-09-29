@@ -81,6 +81,12 @@ Manual captions are preferred over automatic captions for that code. If no
 usable track matches, the command fails and lists usable alternatives without
 downloading captions or writing output files.
 
+Options with values accept both `--lang fr` and `--lang=fr` syntax. Each value
+option may be supplied once. Pass exactly one URL and quote paths containing
+spaces. Unknown options, missing values and extra arguments fail before any
+caption tracks are fetched. For a path starting with `-`, use `--out=-name.srt`
+or prefix the path with `./`.
+
 ## Requirements
 
 - [Node.js](https://nodejs.org) 18 or newer
