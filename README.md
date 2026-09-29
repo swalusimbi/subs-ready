@@ -56,6 +56,16 @@ Choose an explicit output path:
 subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt"
 ```
 
+Existing output files are protected by default. To replace them explicitly:
+
+```sh
+subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt" --force
+```
+
+This also applies to raw captions saved with `--keep-json`. If the captions
+contain no usable cues, the command fails without writing output files, even
+with `--force`.
+
 ## Options
 
 ```text
@@ -63,6 +73,7 @@ subs-ready "https://www.youtube.com/watch?v=VIDEO_ID" --out "subtitles.srt"
 --out <path>       Write the SRT to a specific path
 --lang <code>      Preferred caption language (default: best English track)
 --keep-json        Keep the raw json3 caption file alongside the SRT
+--force            Overwrite existing output files
 ```
 
 ## Requirements

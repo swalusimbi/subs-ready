@@ -6,7 +6,9 @@ const VALUE_OPTIONS = ["--lang", "--video", "--out"];
 
 export function usage(exitCode = 0) {
   console.log(`Usage:
-  subs-ready <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json]
+  subs-ready <youtube-url> [--video file.mp4] [--out file.srt] [--lang en] [--keep-json] [--force]
+
+  --force  Overwrite existing output files (empty captions are always rejected)
 `);
   process.exit(exitCode);
 }
@@ -43,5 +45,6 @@ export function parseArgs(args) {
     videoPath: readOption(args, "--video"),
     explicitOut: readOption(args, "--out"),
     keepJson: hasFlag(args, "--keep-json"),
+    force: hasFlag(args, "--force"),
   };
 }

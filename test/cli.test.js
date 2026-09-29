@@ -7,7 +7,16 @@ test("parses a bare url", () => {
   const options = parseArgs(["https://x"]);
   assert.equal(options.url, "https://x");
   assert.equal(options.keepJson, false);
+  assert.equal(options.force, false);
   assert.equal(options.requestedLang, undefined);
+});
+
+test("force is a flag before or after the url", () => {
+  for (const args of [["--force", "https://x"], ["https://x", "--force"]]) {
+    const options = parseArgs(args);
+    assert.equal(options.url, "https://x");
+    assert.equal(options.force, true);
+  }
 });
 
 test("a flag before the url does not swallow it", () => {
