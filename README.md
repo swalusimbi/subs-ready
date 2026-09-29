@@ -19,13 +19,17 @@ You get a `.srt` named after the video, ready to use.
 - Rebuilds automatic captions into clean, non-overlapping cues
 - Prefers manual English captions when YouTube provides them, and preserves their original timing
 - Falls back to English automatic captions, then to any available track when no language is specified
-- Wraps lines to a readable width (~42 characters, at most two lines per cue)
+- Reflows each cue into at most two balanced lines, targeting 42 characters per line
 - Writes the `.srt` beside your downloaded video, to a path you choose, or named after the video title
 
 Manual captions keep valid start and end times, including cues shorter than a
 second. Missing or invalid durations are repaired using the next event's start,
 with an 80 ms gap when there is room. If the next event does not start later or
 there is no next event, the fallback duration is 2.5 seconds.
+
+Existing line breaks are reflowed across the whole cue. Wrapping preserves all
+words and does not change cue timing. Oversized cues and long unbroken words can
+exceed the 42-character target so text is never truncated or split inside a word.
 
 ## Install
 

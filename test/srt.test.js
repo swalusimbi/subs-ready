@@ -14,13 +14,39 @@ test("wrapLine keeps short text on one line", () => {
   assert.equal(wrapLine("hello world"), "hello world");
 });
 
-test("wrapLine breaks long text into at most two lines", () => {
+test("wrapLine balances oversized text across two lines without losing words", () => {
   const long = Array(20).fill("word").join(" ");
-  assert.equal(wrapLine(long).split("\n").length, 2);
+  const lines = wrapLine(long).split("\n");
+  assert.deepEqual(lines.map((line) => line.length), [49, 49]);
+  assert.equal(lines.join(" "), long);
 });
 
-test("wrapText drops blank lines", () => {
-  assert.equal(wrapText("a\n\nb"), "a\nb");
+test("wrapText reflows existing newlines and repeated whitespace", () => {
+  assert.equal(wrapText("  a\n\nb\r\nc\t d  "), "a b c d");
+  assert.equal(wrapText(" \n\r\t "), "");
+});
+
+test("wrapping keeps text at the width target on one line", () => {
+  const text = "a".repeat(20) + " " + "b".repeat(21);
+  assert.equal(wrapText(text), text);
+});
+
+test("wrapping keeps both lines within the width target when words fit", () => {
+  const text = Array(16).fill("word").join(" ");
+  const lines = wrapText(text).split("\n");
+  assert.deepEqual(lines.map((line) => line.length), [39, 39]);
+  assert.equal(lines.join(" "), text);
+});
+
+test("wrapping never inserts a blank line before an unbroken long word", () => {
+  const longWord = "x".repeat(60);
+  assert.equal(wrapText(longWord), longWord);
+  assert.equal(wrapText(`${longWord} end`), `${longWord}\nend`);
+});
+
+test("wrapping preserves text without spaces", () => {
+  const text = "字幕".repeat(30);
+  assert.equal(wrapText(text), text);
 });
 
 test("countCues counts the timestamp arrows", () => {
@@ -40,6 +66,19 @@ test("json3EventsToSrt keeps manual timing", () => {
   assert.match(srt, /00:00:00,000 --> 00:00:01,000/);
   assert.ok(srt.includes("Hello"));
   assert.ok(srt.includes("World"));
+});
+
+test("json3EventsToSrt reflows multiline captions into two lines with the same timing and text", () => {
+  const text = "This is a long subtitle sentence with enough words to require wrapping across lines for readability.\n"
+    + "This is another long subtitle sentence with enough words to require wrapping across lines for readability.";
+  const srt = json3EventsToSrt({
+    events: [{ tStartMs: 1000, dDurationMs: 4000, segs: [{ utf8: text }] }],
+  });
+  const lines = srt.trim().split("\n");
+  assert.equal(countCues(srt), 1);
+  assert.equal(lines[1], "00:00:01,000 --> 00:00:05,000");
+  assert.equal(lines.slice(2).length, 2);
+  assert.equal(lines.slice(2).join(" "), text.replace(/\s+/g, " "));
 });
 
 test("json3EventsToSrt skips empty cues", () => {
@@ -138,4 +177,16 @@ test("json3WordsToSrt groups words into cues", () => {
 test("json3WordsToSrt handles no events", () => {
   assert.equal(json3WordsToSrt({}), "");
   assert.equal(countCues(json3WordsToSrt({})), 0);
+});
+
+test("json3WordsToSrt balances an oversized segment without dropping text", () => {
+  const text = Array(20).fill("word").join(" ");
+  const srt = json3WordsToSrt({
+    events: [{ tStartMs: 0, segs: [{ utf8: text, tOffsetMs: 0 }] }],
+  });
+  const lines = srt.trim().split("\n");
+  assert.equal(countCues(srt), 1);
+  assert.equal(lines[1], "00:00:00,000 --> 00:00:01,400");
+  assert.deepEqual(lines.slice(2).map((line) => line.length), [49, 49]);
+  assert.equal(lines.slice(2).join(" "), text);
 });
