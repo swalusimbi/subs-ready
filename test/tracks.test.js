@@ -17,6 +17,14 @@ test("availableLanguages lists manual and automatic codes", () => {
   assert.deepEqual(availableLanguages({}), { manual: [], automatic: [] });
 });
 
+test("availableLanguages only lists tracks with a usable json3 format", () => {
+  const info = {
+    subtitles: { en: json3, fr: [{ ext: "vtt" }], de: [] },
+    automatic_captions: { es: json3, it: [{ ext: "srv3" }], pt: null },
+  };
+  assert.deepEqual(availableLanguages(info), { manual: ["en"], automatic: ["es"] });
+});
+
 test("findTrack returns a track only when json3 exists", () => {
   const info = { subtitles: { en: json3, de: [{ ext: "vtt" }] } };
   assert.deepEqual(findTrack(info, "manual", "en"), { lang: "en", type: "manual" });

@@ -78,8 +78,8 @@ with `--force`.
 
 `--lang` requires an exact caption language code, such as `fr` or `en-US`.
 Manual captions are preferred over automatic captions for that code. If no
-usable track matches, the command fails without downloading captions or writing
-output files.
+usable track matches, the command fails and lists usable alternatives without
+downloading captions or writing output files.
 
 ## Requirements
 

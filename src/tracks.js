@@ -9,8 +9,8 @@ export function supportsJson3(track) {
 
 export function availableLanguages(info) {
   return {
-    manual: Object.keys(info.subtitles ?? {}),
-    automatic: Object.keys(info.automatic_captions ?? {}),
+    manual: Object.keys(info.subtitles ?? {}).filter((lang) => supportsJson3(info.subtitles[lang])),
+    automatic: Object.keys(info.automatic_captions ?? {}).filter((lang) => supportsJson3(info.automatic_captions[lang])),
   };
 }
 

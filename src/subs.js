@@ -67,6 +67,9 @@ async function main() {
         : "Could not find any captions for this video.",
       `Available manual languages: ${languages.manual.join(", ") || "none"}`,
       `Available automatic languages: ${languages.automatic.join(", ") || "none"}`,
+      ...(languages.manual.length || languages.automatic.length
+        ? ["Choose a listed language with --lang <code>."]
+        : []),
     ].join("\n"));
   }
 
