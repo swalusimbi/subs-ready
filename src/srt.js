@@ -14,24 +14,27 @@ export function formatTime(ms) {
 }
 
 export function wrapLine(text) {
-  const lines = [""];
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length <= MAX_LINE_LENGTH) return normalized;
 
-  for (const word of text.split(/\s+/)) {
-    const index = lines.length - 1;
-    const next = lines[index] ? `${lines[index]} ${word}` : word;
-
-    if (next.length > MAX_LINE_LENGTH && lines.length < 2) {
-      lines.push(word);
-    } else {
-      lines[index] = next;
+  // Prefer two balanced lines at a word boundary. Oversized cues keep all text
+  // and their original timing, so the width target is deliberately soft.
+  let splitAt = -1;
+  let smallestDifference = Infinity;
+  for (let index = normalized.indexOf(" "); index !== -1; index = normalized.indexOf(" ", index + 1)) {
+    const difference = Math.abs(index - (normalized.length - index - 1));
+    if (difference < smallestDifference) {
+      splitAt = index;
+      smallestDifference = difference;
     }
   }
 
-  return lines.join("\n");
+  if (splitAt === -1) return normalized;
+  return `${normalized.slice(0, splitAt)}\n${normalized.slice(splitAt + 1)}`;
 }
 
 export function wrapText(text) {
-  return text.split("\n").map((line) => wrapLine(line.trim())).filter(Boolean).join("\n");
+  return wrapLine(text);
 }
 
 function cuesToSrt(cues) {
@@ -60,13 +63,17 @@ export function json3EventsToSrt(captionJson) {
     const nextStart = events[index + 1]?.tStartMs;
     let end = Number.isFinite(event.dDurationMs) ? start + event.dDurationMs : undefined;
 
-    if (!end || end <= start) {
-      end = nextStart ? nextStart - 80 : start + 2500;
+    if (!Number.isFinite(end) || end <= start) {
+      end = start + 2500;
+      if (nextStart > start) {
+        // Leave a gap where possible without making a short cue end before it starts.
+        end = nextStart - start > 80 ? nextStart - 80 : nextStart;
+      }
     }
 
     cues.push({
       start,
-      end: Math.max(start + 900, end),
+      end,
       text: wrapText(text),
     });
   }

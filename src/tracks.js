@@ -1,7 +1,7 @@
 // Pick the best caption track from a yt-dlp info dump.
 //
 // Manual captions are preferred over automatic ones, and English is preferred
-// by default. A specific language can be requested to override the defaults.
+// by default. An explicitly requested language must match a usable track.
 
 export function supportsJson3(track) {
   return Array.isArray(track) && track.some((format) => format.ext === "json3");
@@ -9,8 +9,8 @@ export function supportsJson3(track) {
 
 export function availableLanguages(info) {
   return {
-    manual: Object.keys(info.subtitles ?? {}),
-    automatic: Object.keys(info.automatic_captions ?? {}),
+    manual: Object.keys(info.subtitles ?? {}).filter((lang) => supportsJson3(info.subtitles[lang])),
+    automatic: Object.keys(info.automatic_captions ?? {}).filter((lang) => supportsJson3(info.automatic_captions[lang])),
   };
 }
 
@@ -25,12 +25,11 @@ export function chooseTrack(info, preferredLang) {
     const exactManual = findTrack(info, "manual", preferredLang);
     if (exactManual) return exactManual;
 
-    const exactAutomatic = findTrack(info, "automatic", preferredLang);
-    if (exactAutomatic) return exactAutomatic;
+    return findTrack(info, "automatic", preferredLang);
   }
 
-  const manualPreferred = preferredLang ? [preferredLang] : ["en", "en-US", "en-GB", "en-orig"];
-  const automaticPreferred = preferredLang ? [preferredLang] : ["en-orig", "en", "en-US", "en-GB"];
+  const manualPreferred = ["en", "en-US", "en-GB", "en-orig"];
+  const automaticPreferred = ["en-orig", "en", "en-US", "en-GB"];
 
   for (const lang of manualPreferred) {
     const track = findTrack(info, "manual", lang);

@@ -2,15 +2,16 @@
 
 // subs-ready: fetch a YouTube caption track with yt-dlp and write a clean .srt.
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
-import { parseArgs } from "./cli.js";
+import { parseArgs, languageName, formatLanguages } from "./cli.js";
 import { getVideoInfo, downloadCaptions } from "./ytdlp.js";
 import { chooseTrack, availableLanguages } from "./tracks.js";
-import { json3EventsToSrt, json3WordsToSrt, countCues } from "./srt.js";
+import { json3EventsToSrt, json3WordsToSrt } from "./srt.js";
 import { stripExtension, sanitizeName } from "./paths.js";
+import { assertOutputAvailable, writeSubtitles } from "./output.js";
 
 function resolveOutputPath({ explicitOut, videoPath }, info) {
   if (explicitOut) return resolve(explicitOut);
@@ -36,30 +37,17 @@ async function withDots(label, task) {
   }
 }
 
-// Turn a YouTube caption language code into a readable name, e.g.
-// "en-orig" -> "English", "en-US" -> "American English".
-function languageName(code) {
-  const base = code.replace(/-orig$/i, "");
-  try {
-    const name = new Intl.DisplayNames(["en"], { type: "language" }).of(base);
-    if (name && name !== base) return name;
-  } catch {
-    // Intl could not resolve the code; fall back to the raw value below.
-  }
-  return base;
-}
-
 async function main() {
   const options = parseArgs(process.argv.slice(2));
 
   const info = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
-  const outputPath = resolveOutputPath(options, info);
-  const outputDir = dirname(outputPath);
-  if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
+  if (options.listLangs) {
+    console.log(formatLanguages(info));
+    return;
+  }
 
-  const workDir = join(tmpdir(), `subtitle-mvp-${Date.now()}`);
-  mkdirSync(workDir, { recursive: true });
-  const outputTemplate = join(workDir, "captions.%(ext)s");
+  const outputPath = resolveOutputPath(options, info);
+  assertOutputAvailable(outputPath, options.force);
 
   const track = chooseTrack(info, options.requestedLang);
 
@@ -71,31 +59,41 @@ async function main() {
         : "Could not find any captions for this video.",
       `Available manual languages: ${languages.manual.join(", ") || "none"}`,
       `Available automatic languages: ${languages.automatic.join(", ") || "none"}`,
+      ...(languages.manual.length || languages.automatic.length
+        ? ["Choose a listed language with --lang <code>."]
+        : []),
     ].join("\n"));
   }
 
-  await withDots(`Downloading ${track.type} ${languageName(track.lang)} captions`, () => downloadCaptions(track, outputTemplate, options.url));
+  const keptJsonPath = options.keepJson ? `${stripExtension(outputPath)}.${track.lang}.json3` : undefined;
+  if (keptJsonPath) assertOutputAvailable(keptJsonPath, options.force);
 
-  const jsonPath = join(workDir, `captions.${track.lang}.json3`);
-  if (!existsSync(jsonPath)) {
-    throw new Error(`The ${track.lang} captions could not be downloaded. Try: yt-dlp --list-subs ${options.url}`);
+  const workDir = mkdtempSync(join(tmpdir(), "subs-ready-"));
+  try {
+    const outputTemplate = join(workDir, "captions.%(ext)s");
+    await withDots(`Downloading ${track.type} ${languageName(track.lang)} captions`, () => downloadCaptions(track, outputTemplate, options.url));
+
+    const jsonPath = join(workDir, `captions.${track.lang}.json3`);
+    if (!existsSync(jsonPath)) {
+      throw new Error(`The ${track.lang} captions could not be downloaded. Try: yt-dlp --list-subs ${options.url}`);
+    }
+
+    const rawCaptions = readFileSync(jsonPath, "utf8");
+    const captionJson = JSON.parse(rawCaptions);
+    const srt = track.type === "manual" ? json3EventsToSrt(captionJson) : json3WordsToSrt(captionJson);
+    const cueCount = writeSubtitles({
+      outputPath,
+      srt,
+      force: options.force,
+      keptJson: keptJsonPath ? { path: keptJsonPath, content: rawCaptions } : undefined,
+    });
+
+    if (keptJsonPath) console.log(`Kept JSON: ${keptJsonPath}`);
+    console.log(`Wrote SRT: ${outputPath}`);
+    console.log(`Cues: ${cueCount}`);
+  } finally {
+    rmSync(workDir, { recursive: true, force: true });
   }
-
-  const captionJson = JSON.parse(readFileSync(jsonPath, "utf8"));
-  const srt = track.type === "manual" ? json3EventsToSrt(captionJson) : json3WordsToSrt(captionJson);
-
-  writeFileSync(outputPath, srt, "utf8");
-
-  if (options.keepJson) {
-    const keptJsonPath = `${stripExtension(outputPath)}.${track.lang}.json3`;
-    writeFileSync(keptJsonPath, readFileSync(jsonPath));
-    console.log(`Kept JSON: ${keptJsonPath}`);
-  }
-
-  rmSync(workDir, { recursive: true, force: true });
-
-  console.log(`Wrote SRT: ${outputPath}`);
-  console.log(`Cues: ${countCues(srt)}`);
 }
 
 main().catch((error) => {

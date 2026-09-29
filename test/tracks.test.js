@@ -17,6 +17,14 @@ test("availableLanguages lists manual and automatic codes", () => {
   assert.deepEqual(availableLanguages({}), { manual: [], automatic: [] });
 });
 
+test("availableLanguages only lists tracks with a usable json3 format", () => {
+  const info = {
+    subtitles: { en: json3, fr: [{ ext: "vtt" }], de: [] },
+    automatic_captions: { es: json3, it: [{ ext: "srv3" }], pt: null },
+  };
+  assert.deepEqual(availableLanguages(info), { manual: ["en"], automatic: ["es"] });
+});
+
 test("findTrack returns a track only when json3 exists", () => {
   const info = { subtitles: { en: json3, de: [{ ext: "vtt" }] } };
   assert.deepEqual(findTrack(info, "manual", "en"), { lang: "en", type: "manual" });
@@ -40,6 +48,36 @@ test("chooseTrack prefers manual over automatic for the same language", () => {
 test("chooseTrack honors a requested language", () => {
   assert.deepEqual(chooseTrack({ subtitles: { fr: json3 } }, "fr"), { lang: "fr", type: "manual" });
   assert.deepEqual(chooseTrack({ automatic_captions: { de: json3 } }, "de"), { lang: "de", type: "automatic" });
+});
+
+test("chooseTrack does not substitute another language for a missing request", () => {
+  const info = { subtitles: { en: json3 }, automatic_captions: { es: json3 } };
+  assert.equal(chooseTrack(info, "fr"), undefined);
+});
+
+test("chooseTrack rejects a requested language with no usable format", () => {
+  const info = {
+    subtitles: { fr: [{ ext: "vtt" }], en: json3 },
+    automatic_captions: { fr: [{ ext: "srv3" }], es: json3 },
+  };
+  assert.equal(chooseTrack(info, "fr"), undefined);
+});
+
+test("chooseTrack prefers manual captions for an explicit language", () => {
+  const info = { subtitles: { fr: json3 }, automatic_captions: { fr: json3 } };
+  assert.deepEqual(chooseTrack(info, "fr"), { lang: "fr", type: "manual" });
+});
+
+test("chooseTrack uses automatic captions when the requested manual track is unusable", () => {
+  const info = { subtitles: { fr: [{ ext: "vtt" }], en: json3 }, automatic_captions: { fr: json3 } };
+  assert.deepEqual(chooseTrack(info, "fr"), { lang: "fr", type: "automatic" });
+});
+
+test("chooseTrack requires an exact language code including regional variants", () => {
+  const info = { subtitles: { "en-US": json3 } };
+  assert.equal(chooseTrack(info, "en"), undefined);
+  assert.deepEqual(chooseTrack(info, "en-US"), { lang: "en-US", type: "manual" });
+  assert.deepEqual(chooseTrack(info), { lang: "en-US", type: "manual" });
 });
 
 test("chooseTrack falls back to any available track", () => {
