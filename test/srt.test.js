@@ -122,6 +122,7 @@ test("json3EventsToSrt repairs missing or invalid durations using the next event
     const srt = json3EventsToSrt({
       events: [
         { tStartMs: 1000, dDurationMs, segs: [{ utf8: "First" }] },
+        { tStartMs: 1100, segs: [{ utf8: " \n " }] },
         { tStartMs: 1400, dDurationMs: 300, segs: [{ utf8: "Second" }] },
       ],
     });
@@ -189,4 +190,15 @@ test("json3WordsToSrt balances an oversized segment without dropping text", () =
   assert.equal(lines[1], "00:00:00,000 --> 00:00:01,400");
   assert.deepEqual(lines.slice(2).map((line) => line.length), [49, 49]);
   assert.equal(lines.slice(2).join(" "), text);
+});
+
+test("json3WordsToSrt closes cues before exceeding word or character limits and avoids overlap on short gaps", () => {
+  const words = Array.from({ length: 14 }, (_, i) => ({
+    utf8: `w${i}`,
+    tOffsetMs: i * 10,
+  }));
+  const srt = json3WordsToSrt({ events: [{ tStartMs: 1000, segs: words }] });
+  assert.equal(countCues(srt), 2);
+  assert.match(srt, /00:00:01,000 --> 00:00:01,050/);
+  assert.match(srt, /00:00:01,130 --> 00:00:02,530/);
 });

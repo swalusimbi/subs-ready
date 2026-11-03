@@ -52,13 +52,16 @@ export function countCues(srt) {
 export function json3EventsToSrt(captionJson) {
   const cues = [];
   const events = (captionJson.events ?? [])
-    .filter((event) => event.segs && Number.isFinite(event.tStartMs));
+    .filter((event) => event.segs && Number.isFinite(event.tStartMs))
+    .map((event) => ({
+      tStartMs: event.tStartMs,
+      dDurationMs: event.dDurationMs,
+      text: event.segs.map((segment) => segment.utf8 ?? "").join("").trim(),
+    }))
+    .filter((event) => event.text);
 
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
-    const text = event.segs.map((segment) => segment.utf8 ?? "").join("").trim();
-    if (!text) continue;
-
     const start = event.tStartMs;
     const nextStart = events[index + 1]?.tStartMs;
     let end = Number.isFinite(event.dDurationMs) ? start + event.dDurationMs : undefined;
@@ -74,7 +77,7 @@ export function json3EventsToSrt(captionJson) {
     cues.push({
       start,
       end,
-      text: wrapText(text),
+      text: wrapText(event.text),
     });
   }
 
@@ -117,6 +120,8 @@ export function json3WordsToSrt(captionJson) {
       const nextGap = nextWord ? nextWord.start - word.start : 0;
       const shouldClose = duration >= 5200 || candidate.length >= 76 || cueWords.length >= 13;
 
+      if (cueWords.length > 0 && shouldClose) break;
+
       cueWords.push(word);
       lastStart = word.start;
       index += 1;
@@ -126,7 +131,9 @@ export function json3WordsToSrt(captionJson) {
 
     const nextStart = words[index]?.start;
     let end = nextStart ? Math.min(nextStart - 80, lastStart + 1400) : lastStart + 1400;
-    if (end <= start) end = start + 900;
+    if (end <= start) {
+      end = nextStart > start ? nextStart : start + 900;
+    }
 
     cues.push({
       start,
