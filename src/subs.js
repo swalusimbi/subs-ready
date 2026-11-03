@@ -34,6 +34,10 @@ async function withDots(label, task) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
 
+  if (!options.listLangs && (options.explicitOut || options.videoPath)) {
+    assertOutputAvailable(resolveOutputPath(options), options.force);
+  }
+
   const info = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
   if (options.listLangs) {
     console.log(formatLanguages(info));
