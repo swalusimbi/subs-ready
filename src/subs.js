@@ -3,21 +3,15 @@
 // subs-ready: fetch a YouTube caption track with yt-dlp and write a clean .srt.
 
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 import { parseArgs, languageName, formatLanguages } from "./cli.js";
 import { getVideoInfo, downloadCaptions } from "./ytdlp.js";
 import { chooseTrack, availableLanguages } from "./tracks.js";
 import { json3EventsToSrt, json3WordsToSrt } from "./srt.js";
-import { stripExtension, sanitizeName } from "./paths.js";
+import { stripExtension, resolveOutputPath } from "./paths.js";
 import { assertOutputAvailable, writeSubtitles } from "./output.js";
-
-function resolveOutputPath({ explicitOut, videoPath }, info) {
-  if (explicitOut) return resolve(explicitOut);
-  if (videoPath) return resolve(`${stripExtension(videoPath)}.srt`);
-  return resolve(`${sanitizeName(info.title || "subtitle")}.srt`);
-}
 
 // Show a label with trailing dots while a slow step runs, so the wait is not
 // silent. Falls back to a single line when output is not a terminal.
