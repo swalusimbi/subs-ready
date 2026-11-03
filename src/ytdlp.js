@@ -32,13 +32,14 @@ export function run(command, commandArgs) {
 }
 
 export async function getVideoInfo(videoUrl) {
-  const output = await run("yt-dlp", ["--dump-json", "--skip-download", videoUrl]);
+  const output = await run("yt-dlp", ["--dump-json", "--skip-download", "--no-playlist", "--", videoUrl]);
   return JSON.parse(output);
 }
 
 export async function downloadCaptions(track, outputTemplate, url) {
   await run("yt-dlp", [
     "--skip-download",
+    "--no-playlist",
     track.type === "manual" ? "--write-subs" : "--write-auto-subs",
     "--sub-lang",
     track.lang,
@@ -46,6 +47,7 @@ export async function downloadCaptions(track, outputTemplate, url) {
     "json3",
     "-o",
     outputTemplate,
+    "--",
     url,
   ]);
 }
