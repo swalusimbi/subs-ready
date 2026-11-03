@@ -29,11 +29,12 @@ node src/subs.js "https://www.youtube.com/watch?v=VIDEO_ID"
 The CLI is split into focused modules under `src/`:
 
 - `subs.js`: entry point and orchestration
-- `cli.js`: argument parsing
+- `cli.js`: argument parsing and terminal messages
 - `ytdlp.js`: yt-dlp command wrappers
 - `tracks.js`: caption track selection
 - `srt.js`: json3 to SRT conversion
 - `paths.js`: filename helpers
+- `output.js`: output validation and file writing
 
 ## Tests
 
@@ -44,9 +45,9 @@ npm test
 ```
 
 It uses Node's built-in test runner, so there is nothing extra to install. The
-tests cover the pure logic (`srt`, `tracks`, `cli`, `paths`). The yt-dlp and
-file-writing paths are not unit tested, so if you change those, verify with a
-real run against a video. CI runs `npm test` on every pull request.
+tests cover `srt`, `tracks`, `cli`, `paths` and `output`. The `yt-dlp` and
+top-level CLI orchestration paths are not unit tested, so if you change those,
+verify with a real run against a video. CI runs `npm test` on every pull request.
 
 ## Style
 
