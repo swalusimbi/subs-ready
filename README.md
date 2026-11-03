@@ -20,7 +20,7 @@ You get a `.srt` named after the video, ready to use.
 - Prefers manual English captions when YouTube provides them, and preserves their original timing
 - Falls back to English automatic captions, then to any available track when no language is specified
 - Reflows each cue into at most two balanced lines, targeting 42 characters per line
-- Writes the `.srt` beside your downloaded video, to a path you choose, or named after the video title
+- Writes the `.srt` beside your downloaded video, to a path you choose or named after the video title
 
 Manual captions keep valid start and end times, including cues shorter than a
 second. Missing or invalid durations are repaired using the next event's start,
@@ -34,14 +34,20 @@ exceed the 42-character target so text is never truncated or split inside a word
 ## Install
 
 `subs-ready` is a self-contained Node.js CLI with zero npm dependencies, built on
-top of `yt-dlp`. Clone the repo, then link the command from inside it:
+top of `yt-dlp`. Install it globally from npm:
 
 ```sh
-npm link
+npm install -g subs-ready
 ```
 
-You can now run `subs-ready` from any directory. These commands are identical on
-macOS, Linux, and Windows; only the prerequisites below install differently per OS.
+Or run it without installing:
+
+```sh
+npx subs-ready "https://www.youtube.com/watch?v=VIDEO_ID"
+```
+
+These commands are identical on macOS, Linux and Windows; only the prerequisites
+below install differently per OS.
 
 ## Usage
 
