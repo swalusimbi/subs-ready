@@ -5,7 +5,7 @@ clean `.srt` files. Bug reports, fixes, docs and features are all welcome.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org) 18 or newer
+- [Node.js](https://nodejs.org) 22 or newer
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) on your PATH
 
 ## Getting started
@@ -45,9 +45,10 @@ npm test
 ```
 
 It uses Node's built-in test runner, so there is nothing extra to install. The
-tests cover `srt`, `tracks`, `cli`, `paths` and `output`. The `yt-dlp` and
-top-level CLI orchestration paths are not unit tested, so if you change those,
-verify with a real run against a video. CI runs `npm test` on every pull request.
+tests cover `srt`, `tracks`, `cli`, `paths`, `output` and `ytdlp` argument
+building. Live `yt-dlp` execution and top-level CLI orchestration paths are not
+unit tested, so if you change those, verify with a real run against a video. CI
+runs `npm test` on every pull request.
 
 ## Style
 

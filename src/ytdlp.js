@@ -31,23 +31,33 @@ export function run(command, commandArgs) {
   });
 }
 
-export async function getVideoInfo(videoUrl) {
-  const output = await run("yt-dlp", ["--dump-json", "--skip-download", "--no-playlist", "--", videoUrl]);
-  return JSON.parse(output);
+export function videoInfoArgs(videoUrl) {
+  return ["--dump-json", "--skip-download", "--no-playlist", "--", videoUrl];
 }
 
-export async function downloadCaptions(track, outputTemplate, url) {
-  await run("yt-dlp", [
+export function captionDownloadArgs(track, outputTemplate, infoPath) {
+  return [
     "--skip-download",
     "--no-playlist",
+    "--load-info-json",
+    infoPath,
     track.type === "manual" ? "--write-subs" : "--write-auto-subs",
     "--sub-lang",
     track.lang,
     "--sub-format",
     "json3",
+    "--convert-subs",
+    "none",
     "-o",
     outputTemplate,
-    "--",
-    url,
-  ]);
+  ];
+}
+
+export async function getVideoInfo(videoUrl) {
+  const raw = await run("yt-dlp", videoInfoArgs(videoUrl));
+  return { info: JSON.parse(raw), raw };
+}
+
+export async function downloadCaptions(track, outputTemplate, infoPath) {
+  await run("yt-dlp", captionDownloadArgs(track, outputTemplate, infoPath));
 }

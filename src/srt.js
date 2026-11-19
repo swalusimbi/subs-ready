@@ -33,19 +33,17 @@ export function wrapLine(text) {
   return `${normalized.slice(0, splitAt)}\n${normalized.slice(splitAt + 1)}`;
 }
 
-export function wrapText(text) {
-  return wrapLine(text);
-}
-
 function cuesToSrt(cues) {
   return cues.map((cue, cueIndex) => {
     return `${cueIndex + 1}\n${formatTime(cue.start)} --> ${formatTime(cue.end)}\n${cue.text}\n`;
   }).join("\n");
 }
 
-// Each cue has exactly one timestamp line, so the arrow count is the cue count.
+const TIMESTAMP_LINE_PATTERN = /^\d{2,}:\d{2}:\d{2},\d{3} --> \d{2,}:\d{2}:\d{2},\d{3}\r?$/gm;
+
+// Each cue has one timestamp line; match the full line so caption text with " --> " is ignored.
 export function countCues(srt) {
-  return (srt.match(/ --> /g) ?? []).length;
+  return (srt.match(TIMESTAMP_LINE_PATTERN) ?? []).length;
 }
 
 // Manual captions: keep YouTube's timing, only reflow the text.
@@ -77,7 +75,7 @@ export function json3EventsToSrt(captionJson) {
     cues.push({
       start,
       end,
-      text: wrapText(event.text),
+      text: wrapLine(event.text),
     });
   }
 

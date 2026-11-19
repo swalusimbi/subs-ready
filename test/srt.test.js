@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { formatTime, wrapLine, wrapText, countCues, json3EventsToSrt, json3WordsToSrt } from "../src/srt.js";
+import { formatTime, wrapLine, countCues, json3EventsToSrt, json3WordsToSrt } from "../src/srt.js";
 
 test("formatTime renders an SRT timestamp", () => {
   assert.equal(formatTime(0), "00:00:00,000");
@@ -21,37 +21,41 @@ test("wrapLine balances oversized text across two lines without losing words", (
   assert.equal(lines.join(" "), long);
 });
 
-test("wrapText reflows existing newlines and repeated whitespace", () => {
-  assert.equal(wrapText("  a\n\nb\r\nc\t d  "), "a b c d");
-  assert.equal(wrapText(" \n\r\t "), "");
+test("wrapLine reflows existing newlines and repeated whitespace", () => {
+  assert.equal(wrapLine("  a\n\nb\r\nc\t d  "), "a b c d");
+  assert.equal(wrapLine(" \n\r\t "), "");
 });
 
 test("wrapping keeps text at the width target on one line", () => {
   const text = "a".repeat(20) + " " + "b".repeat(21);
-  assert.equal(wrapText(text), text);
+  assert.equal(wrapLine(text), text);
 });
 
 test("wrapping keeps both lines within the width target when words fit", () => {
   const text = Array(16).fill("word").join(" ");
-  const lines = wrapText(text).split("\n");
+  const lines = wrapLine(text).split("\n");
   assert.deepEqual(lines.map((line) => line.length), [39, 39]);
   assert.equal(lines.join(" "), text);
 });
 
 test("wrapping never inserts a blank line before an unbroken long word", () => {
   const longWord = "x".repeat(60);
-  assert.equal(wrapText(longWord), longWord);
-  assert.equal(wrapText(`${longWord} end`), `${longWord}\nend`);
+  assert.equal(wrapLine(longWord), longWord);
+  assert.equal(wrapLine(`${longWord} end`), `${longWord}\nend`);
 });
 
 test("wrapping preserves text without spaces", () => {
   const text = "字幕".repeat(30);
-  assert.equal(wrapText(text), text);
+  assert.equal(wrapLine(text), text);
 });
 
-test("countCues counts the timestamp arrows", () => {
+test("countCues counts SRT timestamp lines and ignores arrows in caption text", () => {
   assert.equal(countCues(""), 0);
-  assert.equal(countCues("x --> y\nz --> w"), 2);
+  assert.equal(countCues("x --> y\nz --> w"), 0);
+  assert.equal(
+    countCues("1\n00:00:00,000 --> 00:00:01,000\nA --> B\n\n2\n00:00:01,500 --> 00:00:02,000\nDone\n"),
+    2,
+  );
 });
 
 test("json3EventsToSrt keeps manual timing", () => {
