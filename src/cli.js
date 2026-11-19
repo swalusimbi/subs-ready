@@ -14,7 +14,8 @@ const FLAG_OPTIONS = new Map([
 ]);
 
 export function usage(exitCode = 0) {
-  console.log(`Turn YouTube captions into a readable .srt subtitle file.
+  const write = exitCode === 0 ? console.log : console.error;
+  write(`Turn YouTube captions into a readable .srt subtitle file.
 
 Usage:
   subs-ready <youtube-url> [options]

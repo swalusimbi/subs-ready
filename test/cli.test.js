@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import { parseArgs, languageName, formatLanguages } from "../src/cli.js";
+
+const subsEntry = fileURLToPath(new URL("../src/subs.js", import.meta.url));
 
 test("parses a bare url", () => {
   const options = parseArgs(["https://x"]);
@@ -142,4 +146,18 @@ test("language listings handle videos with automatic captions only", () => {
   assert.match(result, /Manual captions:\n  none/);
   assert.match(result, /Automatic captions:\n  fr \(French\)/);
   assert.match(result, /Choose a language/);
+});
+
+test("help prints usage to stdout and exits 0", () => {
+  const result = spawnSync(process.execPath, [subsEntry, "--help"], { encoding: "utf8" });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /Usage:\n  subs-ready <youtube-url> \[options\]/);
+  assert.equal(result.stderr, "");
+});
+
+test("running with no arguments prints usage to stderr and exits 1", () => {
+  const result = spawnSync(process.execPath, [subsEntry], { encoding: "utf8" });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /Usage:\n  subs-ready <youtube-url> \[options\]/);
 });
