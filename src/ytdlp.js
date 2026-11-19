@@ -46,6 +46,8 @@ export function captionDownloadArgs(track, outputTemplate, infoPath) {
     track.lang,
     "--sub-format",
     "json3",
+    "--convert-subs",
+    "none",
     "-o",
     outputTemplate,
   ];
