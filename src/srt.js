@@ -33,10 +33,6 @@ export function wrapLine(text) {
   return `${normalized.slice(0, splitAt)}\n${normalized.slice(splitAt + 1)}`;
 }
 
-export function wrapText(text) {
-  return wrapLine(text);
-}
-
 function cuesToSrt(cues) {
   return cues.map((cue, cueIndex) => {
     return `${cueIndex + 1}\n${formatTime(cue.start)} --> ${formatTime(cue.end)}\n${cue.text}\n`;
@@ -79,7 +75,7 @@ export function json3EventsToSrt(captionJson) {
     cues.push({
       start,
       end,
-      text: wrapText(event.text),
+      text: wrapLine(event.text),
     });
   }
 
