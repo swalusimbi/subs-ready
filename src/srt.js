@@ -43,9 +43,11 @@ function cuesToSrt(cues) {
   }).join("\n");
 }
 
-// Each cue has exactly one timestamp line, so the arrow count is the cue count.
+const TIMESTAMP_LINE_PATTERN = /^\d{2,}:\d{2}:\d{2},\d{3} --> \d{2,}:\d{2}:\d{2},\d{3}\r?$/gm;
+
+// Each cue has one timestamp line; match the full line so caption text with " --> " is ignored.
 export function countCues(srt) {
-  return (srt.match(/ --> /g) ?? []).length;
+  return (srt.match(TIMESTAMP_LINE_PATTERN) ?? []).length;
 }
 
 // Manual captions: keep YouTube's timing, only reflow the text.

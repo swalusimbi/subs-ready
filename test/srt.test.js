@@ -49,9 +49,13 @@ test("wrapping preserves text without spaces", () => {
   assert.equal(wrapText(text), text);
 });
 
-test("countCues counts the timestamp arrows", () => {
+test("countCues counts SRT timestamp lines and ignores arrows in caption text", () => {
   assert.equal(countCues(""), 0);
-  assert.equal(countCues("x --> y\nz --> w"), 2);
+  assert.equal(countCues("x --> y\nz --> w"), 0);
+  assert.equal(
+    countCues("1\n00:00:00,000 --> 00:00:01,000\nA --> B\n\n2\n00:00:01,500 --> 00:00:02,000\nDone\n"),
+    2,
+  );
 });
 
 test("json3EventsToSrt keeps manual timing", () => {
