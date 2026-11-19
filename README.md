@@ -140,10 +140,20 @@ Install `yt-dlp` with your platform's package manager:
 brew install yt-dlp
 
 # Linux (pipx, works on any distro)
-pipx install yt-dlp
+pipx install "yt-dlp[default,curl-cffi]"
 
 # Windows (winget, or: scoop install yt-dlp)
 winget install yt-dlp
+```
+
+`subs-ready` respects your `yt-dlp` config file (such as
+`~/.config/yt-dlp/config`). You can let `yt-dlp` use your installed Node runtime
+for YouTube's JavaScript checks, and add a short subtitle delay if YouTube
+returns `HTTP Error 429` when downloading several videos:
+
+```text
+--js-runtimes node
+--sleep-subtitles 2
 ```
 
 ## License
