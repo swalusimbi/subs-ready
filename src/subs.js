@@ -2,7 +2,7 @@
 
 // subs-ready: fetch a YouTube caption track with yt-dlp and write a clean .srt.
 
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -38,7 +38,7 @@ async function main() {
     assertOutputAvailable(resolveOutputPath(options), options.force);
   }
 
-  const info = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
+  const { info, raw: rawInfo } = await withDots("Reading caption tracks", () => getVideoInfo(options.url));
   if (options.listLangs) {
     console.log(formatLanguages(info));
     return;
@@ -68,8 +68,11 @@ async function main() {
 
   const workDir = mkdtempSync(join(tmpdir(), "subs-ready-"));
   try {
+    const infoPath = join(workDir, "info.json");
+    writeFileSync(infoPath, rawInfo, "utf8");
+
     const outputTemplate = join(workDir, "captions.%(ext)s");
-    await withDots(`Downloading ${track.type} ${languageName(track.lang)} captions`, () => downloadCaptions(track, outputTemplate, options.url));
+    await withDots(`Downloading ${track.type} ${languageName(track.lang)} captions`, () => downloadCaptions(track, outputTemplate, infoPath));
 
     const jsonPath = join(workDir, `captions.${track.lang}.json3`);
     if (!existsSync(jsonPath)) {
