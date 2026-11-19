@@ -5,7 +5,7 @@ clean `.srt` files. Bug reports, fixes, docs and features are all welcome.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org) 18 or newer
+- [Node.js](https://nodejs.org) 22 or newer
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) on your PATH
 
 ## Getting started

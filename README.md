@@ -130,7 +130,7 @@ or prefix the path with `./`.
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 18 or newer
+- [Node.js](https://nodejs.org) 22 or newer
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) available on your PATH
 
 Install `yt-dlp` with your platform's package manager:
